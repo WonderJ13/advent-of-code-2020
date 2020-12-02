@@ -6,13 +6,20 @@ fn parser() -> Result<bool, String> {
         return Err("EOF".to_string());
     }
 
-    let min: usize   = min_result.unwrap();
-    let max: usize   = try_read!("{} ").unwrap();
-    let chr: String  = try_read!("{}: ").unwrap();
-    let pass: String = try_read!("{}\n").unwrap();
+    let mut i1: usize = min_result.unwrap();
+    let mut i2: usize = try_read!("{} ").unwrap();
+    let chr: char     = try_read!("{}: ").unwrap();
+    let pass: String  = try_read!("{}\n").unwrap();
 
-    let num_chr = pass.split(&chr).count() - 1;
-    Ok(min <= num_chr && max >= num_chr)
+    //Make values 0-indexed
+    i1 -= 1;
+    i2 -= 1;
+
+    let chr1 = pass.chars().nth(i1).unwrap() == chr;
+    let chr2 = pass.chars().nth(i2).unwrap() == chr;
+
+    //Substitute for logical XOR
+    Ok(chr1 != chr2)
 }
 
 fn main() {
