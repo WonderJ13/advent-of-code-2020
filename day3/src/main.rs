@@ -1,7 +1,7 @@
 use std::io;
 use std::io::BufRead;
 
-fn count_trees_1down_3right(board: Vec<Vec<bool>>) -> i32 {
+fn count_trees(board: &Vec<Vec<bool>>, slope_y: usize, slope_x: usize) -> i64 {
     let rows = board.len();
     let cols = board[0].len();
 
@@ -11,10 +11,18 @@ fn count_trees_1down_3right(board: Vec<Vec<bool>>) -> i32 {
         if board[y][x] {
             count += 1;
         }
-        y += 1;
-        x = (x + 3) % cols;
+        y += slope_y;
+        x = (x + slope_x) % cols;
     }
     count
+}
+
+fn multiply_trees(board: Vec<Vec<bool>>) -> i64 {
+    count_trees(&board, 1, 1) *
+    count_trees(&board, 1, 3) *
+    count_trees(&board, 1, 5) *
+    count_trees(&board, 1, 7) *
+    count_trees(&board, 2, 1)
 }
 
 fn main() {
@@ -33,5 +41,5 @@ fn main() {
     }
 
     //Perform calculations
-    println!("{}", count_trees_1down_3right(board));
+    println!("{}", multiply_trees(board));
 }
