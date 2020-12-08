@@ -26,6 +26,18 @@ fn count_contains_shiny_gold(bags: Vec<(String, Vec<(u64, String)>)>) -> u64 {
     count
 }
 
+fn count_bags_in_bag(bags: &Vec<(String, Vec<(u64, String)>)>, bag_name: &String) -> u64 {
+    let i = bags.binary_search_by(|bag| {
+        bag_name.cmp(&bag.0)
+    }).unwrap();
+
+    let mut count: u64 = 0;
+    for sub_bag in &bags[i].1 {
+        count += count_bags_in_bag(bags, &sub_bag.1) * sub_bag.0 + sub_bag.0;
+    }
+    return count;
+}
+
 fn main() {
     let stdin = io::stdin();
     let stdin = stdin.lock();
@@ -63,7 +75,7 @@ fn main() {
         bags.insert(index, (bag_name, sub_bags));
     }
 
-    let bags_test = vec![
+    /*let bags_test = vec![
         (String::from("light red"), vec![(1, String::from("bright white")), (2, String::from("muted yellow"))]),
         (String::from("dark orange"), vec![(3, String::from("bright white")), (4, String::from("muted yellow"))]),
         (String::from("bright white"), vec![(1, String::from("shiny gold"))]),
@@ -73,7 +85,15 @@ fn main() {
         (String::from("vibrant plum"), vec![(5, String::from("faded blue")), (6, String::from("dotted black"))]),
         (String::from("faded blue"), vec![]),
         (String::from("dotted black"), vec![]),
-    ];
+    ];*/
 
-    println!("{:?}", count_contains_shiny_gold(bags));
+    /*let bags_test = vec![
+        (String::from("silver"), vec![(2, String::from("lithium")), (3, String::from("helium"))]),
+        (String::from("lithium"), vec![]),
+        (String::from("helium"), vec![]),
+        (String::from("gold"), vec![(5, String::from("silver")), (2, String::from("bronze"))]),
+        (String::from("bronze"), vec![]),
+    ];*/
+
+    println!("{:?}", count_bags_in_bag(&bags, &String::from("shiny gold")));
 }
