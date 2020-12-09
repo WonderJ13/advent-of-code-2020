@@ -11,32 +11,73 @@ enum Instruction {
 
 use Instruction::{ACC, NOP, JMP};
 
-fn run_code(ins: Vec<Instruction>) -> i64 {
-    let mut ins_visited: Vec<bool> = vec![false; ins.len()];
+fn step_through_code(ins: &Vec<Instruction>, acc: i64, pc: i64) -> (i64, i64) {
+    return match ins[pc as usize] {
+        ACC(n) => (acc + n, pc + 1),
+        NOP(_) => (acc, pc + 1),
+        JMP(n) => (acc, pc + n),
+    };
+}
 
-    let mut pc: i64 = 0;
+fn get_potential_broken_lines(ins: &Vec<Instruction>) -> Vec<usize> {
+    let mut ins_visited: Vec<bool> = vec![false; ins.len()];
+    let mut pot_ins: Vec<usize> = vec![];
+
     let mut acc: i64 = 0;
+    let mut pc: i64 = 0;
     loop {
         let pci = pc as usize;
-        //Have we run this line?
+
+        //Are we at the end of the program?
         if ins_visited[pci] {
-            return acc;
+            return pot_ins;
         }
         ins_visited[pci] = true;
 
+        //List suspect lines
         match ins[pci] {
-            ACC(n) => {
-                acc += n;
-                pc += 1;
-            },
-            NOP(_) => {
-                pc += 1;
-            },
-            JMP(n) => {
-                pc += n;
-            }
-        }
+            ACC(_) => (),
+            NOP(_) => pot_ins.push(pci),
+            JMP(_) => pot_ins.push(pci),
+        };
+
+        let (acc_n, pc_n) = step_through_code(&ins, acc, pc);
+        acc = acc_n;
+        pc = pc_n;
     }
+}
+
+fn run_code(ins: &Vec<Instruction>) -> Result<i64, i64> {
+    let mut ins_visited: Vec<bool> = vec![false; ins.len()];
+
+    let mut acc: i64 = 0;
+    let mut pc: i64 = 0;
+    loop {
+        let pci = pc as usize;
+
+        //Are we at the end of the program?
+        if pci >= ins.len() {
+            return Ok(acc);
+        }
+
+        //Have we run this line?
+        if ins_visited[pci] {
+            return Err(acc);
+        }
+        ins_visited[pci] = true;
+
+        let (acc_n, pc_n) = step_through_code(&ins, acc, pc);
+        acc = acc_n;
+        pc = pc_n;
+    }
+}
+
+fn flip_ins(ins: &Vec<Instruction>, pc: usize) -> Instruction {
+    return match ins[pc] {
+        ACC(n) => ACC(n),
+        NOP(n) => JMP(n),
+        JMP(n) => NOP(n),
+    };
 }
 
 fn main() {
@@ -58,17 +99,17 @@ fn main() {
         ins.push(instruction);
     }
 
-    let ins_test: Vec<Instruction> = vec![
-        NOP(0),
-        ACC(1),
-        JMP(4),
-        ACC(3),
-        JMP(-3),
-        ACC(-99),
-        ACC(1),
-        JMP(-4),
-        ACC(6),
-    ];
+    for pc in get_potential_broken_lines(&ins) {
+        ins[pc] = flip_ins(&ins, pc);
 
-    println!("{}", run_code(ins));
+        match run_code(&ins) {
+            Ok(n) => {
+                println!("{}", n);
+                break;
+            },
+            Err(_) => (),
+        }
+
+        ins[pc] = flip_ins(&ins, pc);
+    }
 }
