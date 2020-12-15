@@ -2,6 +2,15 @@ use std::io;
 use std::io::BufRead;
 use std::str::FromStr;
 
+fn add_prev_3(nums: &Vec<u64>, index: usize) -> u64 {
+    match index {
+        0 => 1,
+        1 => nums[0],
+        2 => nums[1] + nums[0],
+        _ => nums[index-1] + nums[index-2] + nums[index-3],
+    }
+}
+
 fn main() {
     let stdin = io::stdin();
     let stdin = stdin.lock();
@@ -11,19 +20,16 @@ fn main() {
         let num = u64::from_str(&line.unwrap()).unwrap();
         jolts.push(num);
     });
-
+    jolts.push(0);
     jolts.sort_unstable();
+    jolts.push(jolts[jolts.len()-1] + 3);
 
-    let mut ones: u64 = 0;
-    let mut threes: u64 = 1; //Device is always 3 higher than the highest joltage
-    jolts.iter().fold(0, |prev_val, val| {
-        let diff = val - prev_val;
-        match diff {
-            1 => ones += 1,
-            3 => threes += 1,
-            _ => (),
-        };
-        *val
+    let jolt_max = jolts[jolts.len()-1] as usize + 1;
+    let mut arrangements = vec![0; jolt_max];
+    jolts.iter().for_each(|jolt| {
+        let jolt = *jolt as usize;
+        arrangements[jolt] = add_prev_3(&arrangements, jolt);
     });
-    println!("{}", ones * threes);
+
+    println!("{}", arrangements[jolt_max-1]);
 }
