@@ -6,32 +6,64 @@ fn main() {
     let stdin = io::stdin();
     let stdin = stdin.lock();
 
-    let mut dir = 0;
-    let mut x = 0;
-    let mut y = 0;
+    let mut ship_x = 0;
+    let mut ship_y = 0;
+    let mut wayp_x = 10;
+    let mut wayp_y = 1;
     for line in stdin.lines() {
         let line = line.unwrap();
         let mut line = line.chars();
         let command = line.next().unwrap();
         let num = i64::from_str(&line.as_str()).unwrap();
         match command {
-            'N' => y += num,
-            'S' => y -= num,
-            'E' => x += num,
-            'W' => x -= num,
-            'L' => dir = (dir + num) % 360,
-            'R' => dir = (dir + (360 - num)) % 360,
-            'F' => {
-                match dir {
-                    0 => x += num,
-                    90 => y += num,
-                    180 => x -= num,
-                    270 => y -= num,
+            'N' => wayp_y += num,
+            'S' => wayp_y -= num,
+            'E' => wayp_x += num,
+            'W' => wayp_x -= num,
+            'L' => {
+                match num {
+                    90 => {
+                        let tmp = wayp_y;
+                        wayp_y = wayp_x;
+                        wayp_x = -tmp;
+                    },
+                    180 => {
+                        wayp_y = -wayp_y;
+                        wayp_x = -wayp_x;
+                    },
+                    270 => {
+                        let tmp = wayp_y;
+                        wayp_y = -wayp_x;
+                        wayp_x = tmp;
+                    },
                     _ => (),
                 }
+            }
+            'R' => {
+                match num {
+                    90 => {
+                        let tmp = wayp_y;
+                        wayp_y = -wayp_x;
+                        wayp_x = tmp;
+                    },
+                    180 => {
+                        wayp_y = -wayp_y;
+                        wayp_x = -wayp_x;
+                    },
+                    270 => {
+                        let tmp = wayp_y;
+                        wayp_y = wayp_x;
+                        wayp_x = -tmp;
+                    },
+                    _ => (),
+                }
+            },
+            'F' => {
+                ship_x += wayp_x * num;
+                ship_y += wayp_y * num;
             },
             _ => (),
         };
     }
-    println!("{}", x.abs() + y.abs());
+    println!("{}", ship_x.abs() + ship_y.abs());
 }
