@@ -1,28 +1,53 @@
 use std::io;
 use std::str::FromStr;
 
+enum Bus {
+    ID(u64),
+    NIL,
+}
+
+use Bus::{ID, NIL};
+
 fn main() {
     let stdin = io::stdin();
     let mut buffer = String::new();
 
+    //Skip first line
     stdin.read_line(&mut buffer).unwrap();
-    let earliest_time = u64::from_str(&buffer.trim()).unwrap();
     buffer.clear();
 
     stdin.read_line(&mut buffer).unwrap();
-    let mut bus_data: Vec<(u64, u64)> = buffer
+    let bus_ids: Vec<(usize, Bus)> = buffer
         .trim()
         .split(',')
         .map(|x| match u64::from_str(&x) {
-                Ok(n) => n,
-                Err(_) => 0,
+                Ok(n) => ID(n),
+                Err(_) => NIL,
             }
         )
-        .filter(|x| *x != 0)
-        .map(|x| (x, x - (earliest_time % x)))
+        .enumerate()
         .collect();
 
-    bus_data.sort_by_key(|x| x.1);
+    let mut time = match bus_ids[0].1 {
+        ID(n) => n,
+        NIL => 0,
+    };
 
-    println!("{}", bus_data[0].0 * bus_data[0].1);
+    let mut jump_by = 1;
+    for (i, bus) in bus_ids {
+        let bus_id = match bus {
+            ID(n) => n,
+            NIL => continue,
+        };
+
+        loop {
+            if (time + i as u64) % bus_id == 0 {
+                jump_by = jump_by * bus_id;
+                break;
+            }
+            time += jump_by;
+        }
+    }
+
+    println!("{:?}", time);
 }
