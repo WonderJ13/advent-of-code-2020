@@ -3,6 +3,57 @@ use std::io::BufRead;
 use std::collections::HashMap;
 use std::str::FromStr;
 
+struct MemLocIter {
+    x_pos: u64,
+    counter: u64,
+    one_bits: u8,
+}
+
+impl MemLocIter {
+    fn from(x_pos: u64) -> MemLocIter {
+        let mut one_bits: u8 = 0;
+        for i in 0..64 {
+            if x_pos & 1 << i > 0 {
+                one_bits += 1;
+            }
+        }
+
+        MemLocIter{
+            x_pos: x_pos,
+            counter: 0,
+            one_bits: one_bits,
+        }
+    }
+}
+
+impl Iterator for MemLocIter {
+    type Item = u64;
+    fn next(&mut self) -> Option<u64> {
+        if 2_u64.pow(self.one_bits.into()) == self.counter {
+            return None
+        }
+
+        let mut ret = 0;
+        let mut x_pos_mask = 1;
+        for i in 0..self.one_bits {
+            let counter_mask = 1 << i;
+            
+            loop {
+                if self.x_pos & x_pos_mask > 0 {
+                    if self.counter & counter_mask > 0 {
+                        ret |= x_pos_mask;
+                    }
+                    x_pos_mask <<= 1;
+                    break;
+                }
+                x_pos_mask <<= 1;
+            }
+        }
+        self.counter += 1;
+        Some(ret)
+    }
+}
+
 #[derive(Debug)]
 struct State {
     mem: HashMap<u64, u64>,
@@ -45,8 +96,12 @@ impl State {
     }
 
     fn set_memory(&mut self, mem_loc: u64, val: u64) {
-        let val = (val & self.x_pos) | self.hcv;
-        self.mem.insert(mem_loc, val);
+        let base_mem_loc = (mem_loc | self.hcv | self.x_pos) ^ self.x_pos;
+        let mem_loc_iter = MemLocIter::from(self.x_pos);
+
+        mem_loc_iter.for_each(|mask| {
+            self.mem.insert(base_mem_loc | mask, val);
+        });
     }
 
     fn sum_of_memory(&self) -> u64 {
@@ -89,6 +144,6 @@ fn main() {
             },
         }
     }
-    
+
     println!("{}", state.sum_of_memory());
 }
