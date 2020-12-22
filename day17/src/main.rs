@@ -9,7 +9,7 @@ enum Cube {
 
 use Cube::{INACTIVE, ACTIVE};
 
-type CubeRegion = Vec<Vec<Vec<Cube>>>;
+type CubeRegion = Vec<Vec<Vec<Vec<Cube>>>>;
 
 fn expand_region_x_dir(cubes: &mut CubeRegion) {
     let mut expand_left = false;
@@ -18,20 +18,23 @@ fn expand_region_x_dir(cubes: &mut CubeRegion) {
     let x_dir_count = cubes.len();
     let y_dir_count = cubes[0].len();
     let z_dir_count = cubes[0][0].len();
+    let w_dir_count = cubes[0][0][0].len();
 
     for j in 0..y_dir_count {
         for k in 0..z_dir_count {
-            expand_left |= cubes[0][j][k] == ACTIVE;
-            expand_right |= cubes[x_dir_count-1][j][k] == ACTIVE;
+            for l in 0..w_dir_count {
+                expand_left |= cubes[0][j][k][l] == ACTIVE;
+                expand_right |= cubes[x_dir_count-1][j][k][l] == ACTIVE;
+            }
         }
     }
 
     if expand_left {
-        cubes.insert(0, vec![vec![INACTIVE; z_dir_count]; y_dir_count]);
+        cubes.insert(0, vec![vec![vec![INACTIVE; w_dir_count]; z_dir_count]; y_dir_count]);
     }
     
     if expand_right {
-        cubes.push(vec![vec![INACTIVE; z_dir_count]; y_dir_count]);
+        cubes.push(vec![vec![vec![INACTIVE; w_dir_count]; z_dir_count]; y_dir_count]);
     }
 }
 
@@ -43,23 +46,26 @@ fn expand_region_y_dir(cubes: &mut CubeRegion) {
     let x_dir_count = cubes.len();
     let y_dir_count = cubes[0].len();
     let z_dir_count = cubes[0][0].len();
+    let w_dir_count = cubes[0][0][0].len();
 
     for i in 0..x_dir_count {
         for k in 0..z_dir_count {
-            expand_top |= cubes[i][0][k] == ACTIVE;
-            expand_bottom |= cubes[i][y_dir_count-1][k] == ACTIVE;
+            for l in 0..w_dir_count {
+                expand_top |= cubes[i][0][k][l] == ACTIVE;
+                expand_bottom |= cubes[i][y_dir_count-1][k][l] == ACTIVE;
+            }
         }
     }
 
     if expand_top {
         for i in 0..x_dir_count {
-            cubes[i].insert(0, vec![INACTIVE; z_dir_count]);
+            cubes[i].insert(0, vec![vec![INACTIVE; w_dir_count]; z_dir_count]);
         }
     }
 
     if expand_bottom {
         for i in 0..x_dir_count {
-            cubes[i].push(vec![INACTIVE; z_dir_count]);
+            cubes[i].push(vec![vec![INACTIVE; w_dir_count]; z_dir_count]);
         }
     }
 }
@@ -72,18 +78,21 @@ fn expand_region_z_dir(cubes: &mut CubeRegion) {
     let x_dir_count = cubes.len();
     let y_dir_count = cubes[0].len();
     let z_dir_count = cubes[0][0].len();
+    let w_dir_count = cubes[0][0][0].len();
 
     for i in 0..x_dir_count {
         for j in 0..y_dir_count {
-            expand_front |= cubes[i][j][0] == ACTIVE;
-            expand_back |= cubes[i][j][z_dir_count-1] == ACTIVE;
+            for l in 0..w_dir_count {
+                expand_front |= cubes[i][j][0][l] == ACTIVE;
+                expand_back |= cubes[i][j][z_dir_count-1][l] == ACTIVE;
+            }
         }
     }
 
     if expand_front {
         for i in 0..x_dir_count {
             for j in 0..y_dir_count {
-                cubes[i][j].insert(0, INACTIVE);
+                cubes[i][j].insert(0, vec![INACTIVE; w_dir_count]);
             }
         }
     }
@@ -91,27 +100,70 @@ fn expand_region_z_dir(cubes: &mut CubeRegion) {
     if expand_back {
         for i in 0..x_dir_count {
             for j in 0..y_dir_count {
-                cubes[i][j].push(INACTIVE);
+                cubes[i][j].push(vec![INACTIVE; w_dir_count]);
             }
         }
     }
 }
 
-fn in_bounds(cubes: &CubeRegion, i: isize, j: isize, k: isize) -> bool {
-    i >= 0 && i < cubes.len() as isize &&
-        j >= 0 && j < cubes[0].len() as isize &&
-        k >= 0 && k < cubes[0][0].len() as isize
+fn expand_region_w_dir(cubes: &mut CubeRegion) {
+    let mut expand_flarg = false;
+    let mut expand_blarg = false;
+
+
+    let x_dir_count = cubes.len();
+    let y_dir_count = cubes[0].len();
+    let z_dir_count = cubes[0][0].len();
+    let w_dir_count = cubes[0][0][0].len();
+
+    for i in 0..x_dir_count {
+        for j in 0..y_dir_count {
+            for k in 0..z_dir_count {
+                expand_flarg |= cubes[i][j][k][0] == ACTIVE;
+                expand_blarg |= cubes[i][j][k][w_dir_count-1] == ACTIVE;
+            }
+        }
+    }
+
+    if expand_flarg {
+        for i in 0..x_dir_count {
+            for j in 0..y_dir_count {
+                for k in 0..z_dir_count {
+                    cubes[i][j][k].insert(0, INACTIVE);
+                }
+            }
+        }
+    }
+
+    if expand_blarg {
+        for i in 0..x_dir_count {
+            for j in 0..y_dir_count {
+                for k in 0..z_dir_count {
+                    cubes[i][j][k].push(INACTIVE);
+                }
+            }
+        }
+    }
 }
 
-fn count_adjacent_cubes(cubes: &CubeRegion, i: usize, j: usize, k: usize) -> u8 {
+fn in_bounds(cubes: &CubeRegion, i: isize, j: isize, k: isize, l: isize) -> bool {
+    i >= 0 && i < cubes.len() as isize &&
+        j >= 0 && j < cubes[0].len() as isize &&
+        k >= 0 && k < cubes[0][0].len() as isize &&
+        l >= 0 && l < cubes[0][0][0].len() as isize
+}
+
+fn count_adjacent_cubes(cubes: &CubeRegion, i: usize, j: usize, k: usize, l: usize) -> u8 {
     let mut count: u8 = 0;
     let i = i as isize;
     let j = j as isize;
     let k = k as isize;
+    let l = l as isize;
 
     let ids: Vec<isize> = vec![-1, 0, 1];
     let jds: Vec<isize> = vec![-1, 0, 1];
     let kds: Vec<isize> = vec![-1, 0, 1];
+    let lds: Vec<isize> = vec![-1, 0, 1];
 
     for id in &ids {
         let id = *id;
@@ -119,22 +171,26 @@ fn count_adjacent_cubes(cubes: &CubeRegion, i: usize, j: usize, k: usize) -> u8 
             let jd = *jd;
             for kd in &kds {
                 let kd = *kd;
-                if id == 0 && jd == 0 && kd == 0 {
-                    continue;
+                for ld in &lds {
+                    let ld = *ld;
+                    if id == 0 && jd == 0 && kd == 0 && ld == 0 {
+                        continue;
+                    }
+
+                    let ii = i + id;
+                    let ji = j + jd;
+                    let ki = k + kd;
+                    let li = l + ld;
+
+                    if !in_bounds(cubes, ii, ji, ki, li) {
+                        continue;
+                    }
+
+                    count += match cubes[ii as usize][ji as usize][ki as usize][li as usize] {
+                        ACTIVE => 1,
+                        _ => 0,
+                    };
                 }
-
-                let ii = i + id;
-                let ji = j + jd;
-                let ki = k + kd;
-
-                if !in_bounds(cubes, ii, ji, ki) {
-                    continue;
-                }
-
-                count += match cubes[ii as usize][ji as usize][ki as usize] {
-                    ACTIVE => 1,
-                    _ => 0,
-                };
             }
         }
     }
@@ -146,16 +202,19 @@ fn perform_cycle(cubes: &CubeRegion) -> CubeRegion {
     expand_region_x_dir(&mut new_cubes);
     expand_region_y_dir(&mut new_cubes);
     expand_region_z_dir(&mut new_cubes);
+    expand_region_w_dir(&mut new_cubes);
 
     let ref_cubes = new_cubes.clone();
     for i in 0..new_cubes.len() {
         for j in 0..new_cubes[0].len() {
             for k in 0..new_cubes[0][0].len() {
-                let count = count_adjacent_cubes(&ref_cubes, i, j, k);
-                new_cubes[i][j][k] = match ref_cubes[i][j][k] {
-                    ACTIVE => if count == 2 || count == 3 { ACTIVE } else { INACTIVE },
-                    INACTIVE => if count == 3 { ACTIVE } else { INACTIVE },
-                };
+                for l in 0..new_cubes[0][0][0].len() {
+                    let count = count_adjacent_cubes(&ref_cubes, i, j, k, l);
+                    new_cubes[i][j][k][l] = match ref_cubes[i][j][k][l] {
+                        ACTIVE => if count == 2 || count == 3 { ACTIVE } else { INACTIVE },
+                        INACTIVE => if count == 3 { ACTIVE } else { INACTIVE },
+                    };
+                }
             }
         }
     }
@@ -167,10 +226,12 @@ fn count_active_cubes(cubes: &CubeRegion) -> u64 {
     for i in 0..cubes.len() {
         for j in 0..cubes[0].len() {
             for k in 0..cubes[0][0].len() {
-                count += match cubes[i][j][k] {
-                    ACTIVE => 1,
-                    INACTIVE => 0,
-                };
+                for l in 0..cubes[0][0][0].len() {
+                    count += match cubes[i][j][k][l] {
+                        ACTIVE => 1,
+                        INACTIVE => 0,
+                    };
+                }
             }
         }
     }
@@ -184,13 +245,13 @@ fn main() {
     let mut cubes: CubeRegion = Vec::new();
     stdin.lines().for_each(|line| {
         let line = line.unwrap();
-        let mut row: Vec<Vec<Cube>> = vec![vec![]];
+        let mut row: Vec<Vec<Vec<Cube>>> = vec![vec![vec![]]];
         line.chars().for_each(|chr| {
             let state = match chr {
                 '#' => ACTIVE,
                 _ => INACTIVE,
             };
-            row[0].push(state);
+            row[0][0].push(state);
         });
         cubes.push(row);
     });
