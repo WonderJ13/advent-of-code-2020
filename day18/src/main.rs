@@ -42,22 +42,29 @@ fn parse_expr(items: &Vec<LexItem>, pos: isize) -> Result<(ParseNode, isize), St
     //Plan, parse left hand side, parse operator, parse right hand side,
     //put it all together and clap your hands
 
-    let (left_summand, new_pos) = parse_term(&items, pos)?;
+    let (left_summand, new_pos) = parse_factor(&items, pos)?;
     match items.get(new_pos as usize) {
-        Some(LexItem::Op('+')) => {
+        Some(LexItem::Op('*')) => {
             let (right_summand, pos_after_right) = parse_expr(&items, new_pos-1)?;
             let node = ParseNode{
-                item: ParseItem::Add,
+                item: ParseItem::Mul,
                 left_summand: Some(Box::new(left_summand)),
                 right_summand: Some(Box::new(right_summand)),
             };
 
             Ok((node, pos_after_right))
         },
-        Some(LexItem::Op('*')) => {
-            let (right_summand, pos_after_right) = parse_expr(&items, new_pos-1)?;
+        _ => Ok((left_summand, new_pos)),
+    }
+}
+
+fn parse_factor(items: &Vec<LexItem>, pos: isize) -> Result<(ParseNode, isize), String> {
+    let (left_summand, new_pos) = parse_term(&items, pos)?;
+    match items.get(new_pos as usize) {
+        Some(LexItem::Op('+')) => {
+            let (right_summand, pos_after_right) = parse_factor(&items, new_pos-1)?;
             let node = ParseNode{
-                item: ParseItem::Mul,
+                item: ParseItem::Add,
                 left_summand: Some(Box::new(left_summand)),
                 right_summand: Some(Box::new(right_summand)),
             };
